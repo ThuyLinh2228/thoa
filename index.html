@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Trái Tim Vũ Trụ Full Combo</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="universe"></canvas>
+
+  <script>
+    const canvas = document.getElementById('universe');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const w = canvas.width;
+    const h = canvas.height;
+    const cx = w / 2;
+    const cy = h / 2;
+
+    // Hình cầu bằng hạt nhỏ (hình tròn đầu tiên của m)
+    const sphereParticles = [];
+    const SPHERE_RADIUS = 200;
+    const SPHERE_COUNT = 1500;
+    for (let i = 0; i < SPHERE_COUNT; i++) {
+      const theta = Math.random() * 2 * Math.PI;
+      const phi = Math.acos((Math.random() * 2) - 1);
+      const r = SPHERE_RADIUS;
+      const x = r * Math.sin(phi) * Math.cos(theta);
+      const y = r * Math.sin(phi) * Math.sin(theta);
+      const z = r * Math.cos(phi);
+      sphereParticles.push({x, y, z});
+    }
+
+    // Trái tim công thức
+    const heartParticles = [];
+    const HEART_COUNT = 1200;
+    for (let i = 0; i < HEART_COUNT; i++) {
+      const u = Math.random() * Math.PI * 2;
+      const v = (Math.random() - 0.5) * 2;
+      const x = 16 * Math.pow(Math.sin(u), 3);
+      const y = 13 * Math.cos(u) - 5 * Math.cos(2 * u) - 2 * Math.cos(3 * u) - Math.cos(4 * u);
+      const z = v * 8;
+      heartParticles.push({x: x * 10, y: -y * 10, z});
+    }
+
+    // Vành đai hình trái tim
+    const ringParticles = [];
+    const RING_RADIUS = SPHERE_RADIUS + 45;
+    const RING_THICKNESS = 60;
+    const RING_COUNT = 1000;
+    for (let i = 0; i < RING_COUNT; i++) {
+      const angle = Math.random() * 2 * Math.PI;
+      const distance = RING_RADIUS + (Math.random() - 0.5) * RING_THICKNESS;
+      const x = distance * Math.cos(angle);
+      const z = distance * Math.sin(angle);
+      const y = (Math.random() - 0.5) * 8;
+      ringParticles.push({x, y, z});
+    }
+
+    function rotateY(p, angle) {
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      const x = p.x * cos - p.z * sin;
+      const z = p.z * cos + p.x * sin;
+      return {x, y: p.y, z};
+    }
+
+    function drawHeart(x, y, size, color) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(size, size);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(0, -3, -3, -3, -3, 0);
+      ctx.bezierCurveTo(-3, 3, 0, 5, 0, 7);
+      ctx.bezierCurveTo(0, 5, 3, 3, 3, 0);
+      ctx.bezierCurveTo(3, -3, 0, -3, 0, 0);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, w, h);
+      const time = Date.now() * 0.001;
+      const angle = time;
+
+      // Vẽ hình cầu bằng hạt nhỏ
+      for (let p of sphereParticles) {
+        const rotated = rotateY(p, angle);
+        const scale = 300 / (300 + rotated.z);
+        const x = cx + rotated.x * scale;
+        const y = cy + rotated.y * scale;
+        ctx.beginPath();
+        ctx.arc(x, y, 1.1 * scale, 0, 2 * Math.PI);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.fill();
+      }
+
+      // Vẽ trái tim to ở giữa
+      for (let p of heartParticles) {
+        const rotated = rotateY(p, angle);
+        const scale = 300 / (300 + rotated.z);
+        const x = cx + rotated.x * scale;
+        const y = cy + rotated.y * scale;
+        const color = `rgba(255, ${100 + Math.random() * 155}, 255, 0.8)`;
+        drawHeart(x, y, 0.25 * scale, color);
+      }
+
+      // Vẽ vành đai hình trái tim
+      for (let p of ringParticles) {
+        const rotated = rotateY(p, angle);
+        if (rotated.z < 0) rotated.y += 20 * (rotated.z / -300); // nghiêng phía sau
+        const scale = 300 / (300 + rotated.z);
+        const x = cx + rotated.x * scale;
+        const y = cy + rotated.y * scale;
+        drawHeart(x, y, 0.12 * scale, 'rgba(255, 255, 255, 0.7)');
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+  </script>
+</body>
+</html>
